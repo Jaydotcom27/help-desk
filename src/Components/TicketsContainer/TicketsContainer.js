@@ -546,7 +546,7 @@ const TicketsContainer = () => {
                                   },
                                   onComplete(data) {
                                     console.log('data', data)
-                                    }
+                                  },
                                 })
                               }}
                             >
