@@ -1,56 +1,287 @@
-import React, { useState } from 'react'
-import Tab from 'react-bootstrap/Tab';
-import Row from 'react-bootstrap/Row';
-import Col from 'react-bootstrap/Col';
-import Nav from 'react-bootstrap/Nav';
-import Table from 'react-bootstrap/Table';
-import Button from 'react-bootstrap/Button';
-import Modal from 'react-bootstrap/Modal';
-import Form from 'react-bootstrap/Form';
-import Card from 'react-bootstrap/Card';
-import Badge from 'react-bootstrap/Badge';
-import { BsCheck } from "react-icons/bs";
-
-
+import React, { useState, useCallback } from 'react'
+import Tab from 'react-bootstrap/Tab'
+import Row from 'react-bootstrap/Row'
+import Col from 'react-bootstrap/Col'
+import Nav from 'react-bootstrap/Nav'
+import Table from 'react-bootstrap/Table'
+import Button from 'react-bootstrap/Button'
+import Modal from 'react-bootstrap/Modal'
+import Form from 'react-bootstrap/Form'
+import Card from 'react-bootstrap/Card'
+import Badge from 'react-bootstrap/Badge'
+import { BsCheck } from 'react-icons/bs'
+import { useMutation, useQuery, gql } from '@apollo/client'
 import 'styled-components/macro'
+import { useUser } from '../../Providers/User'
+
+const TICKETS_QUERY = gql`
+  query tickets {
+    tickets {
+      id
+      title
+      description
+      status
+      severity
+      user {
+        username
+        email
+      }
+    }
+  }
+`
+
+const USERS_QUERY = gql`
+  query users {
+    users {
+      id
+      username
+      role {
+        name
+      }
+    }
+  }
+`
+
+const CREATE_TICKET_MUTATION = gql`
+  mutation CreateTicket($data: createTicketInput!) {
+    createTicket(input: $data) {
+      ticket {
+        id
+        description
+        tecnology {
+          name
+        }
+        title
+      }
+    }
+  }
+`
+
+const DELETE_TICKET_MUTATION = gql`
+  mutation DeleteTicket($data: deleteTicketInput!) {
+    deleteTicket(input: $data) {
+      ticket {
+        id
+        description
+        tecnology {
+          name
+        }
+        title
+      }
+    }
+  }
+`
+
+const EDIT_TICKET_MUTATION = gql`
+  mutation EditTicket($data: updateTicketInput!) {
+    updateTicket(input: $data) {
+      ticket {
+        id
+        description
+        tecnology {
+          name
+        }
+        title
+        user {
+          username
+        }
+        assignedUser {
+          username
+        }
+      }
+    }
+  }
+`
+
+const ticketList = [
+  {
+    id: 'T01',
+    Name: 'Ticket No.1',
+    description: 'User log out is not working properly',
+    status: 'In Progress',
+    severity: 'Low',
+  },
+  {
+    id: 'T02',
+    Name: 'Ticket No.2',
+    description: 'User log in is not working properly',
+    status: 'In Progress',
+    severity: 'Low',
+  },
+  {
+    id: 'T03',
+    Name: 'Ticket No.3',
+    description: 'User sign out is not working properly',
+    status: 'Completed',
+    severity: 'High',
+  },
+  {
+    id: 'T04',
+    Name: 'Ticket No.4',
+    description: 'There a bug on the landing page',
+    status: 'In Progress',
+    severity: 'Half',
+  },
+  {
+    id: 'T05',
+    Name: 'Ticket No.5',
+    description: 'Chat interface is laggy',
+    status: 'Completed',
+    severity: 'High',
+  },
+]
+
+const devsList = [
+  { id: 'D01', Name: 'Enrique Elmio' },
+  { id: 'D02', Name: 'Jay Martinez' },
+  { id: 'D03', Name: 'David Bujosa' },
+]
+
+const DEFAULT_NEW_TICKET = {
+  title: '',
+  description: '',
+  status: 'inProgress',
+  severity: 'low',
+}
+
+const DEFAULT_USER = {
+  id: '',
+}
 
 const TicketsContainer = () => {
-  const userType = "admin";
+  const userType = 'admin'
+  const user = useUser()
 
-
-  const ticketList = [
-    { id: "T01", Name: "Ticket No.1", description: "User log out is not working properly", status: "In Progress", severity: "Low" },
-    { id: "T02", Name: "Ticket No.2", description: "User log in is not working properly", status: "In Progress", severity: "Low" },
-    { id: "T03", Name: "Ticket No.3", description: "User sign out is not working properly", status: "Completed", severity: "High" },
-    { id: "T04", Name: "Ticket No.4", description: "There a bug on the landing page", status: "In Progress", severity: "Half" },
-    { id: "T05", Name: "Ticket No.5", description: "Chat interface is laggy", status: "Completed", severity: "High" },
-
-  ]
-
-  const devsList = [
-    { id: "D01", Name: "Enrique Elmio" },
-    { id: "D02", Name: "Jay Martinez" },
-    { id: "D03", Name: "David Bujosa" },
-  ]
-
-  const [tickets] = useState(ticketList);
-  const [devs] = useState(devsList);
-  const [selectedTicket, setSelectedTicket] = useState({});
+  const [tickets] = useState(ticketList)
+  const [devs] = useState(devsList)
+  const [selectedTicket, setSelectedTicket] = useState({})
   const selectTicket = (element, action) => {
     setSelectedTicket(element)
-    if (selectedTicket && action === "Edit") {
+    if (selectedTicket && action === 'Edit') {
       setShowEdit(true)
-    } else if (selectedTicket && action === "Delete") {
+    } else if (selectedTicket && action === 'Delete') {
       setShowDelete(true)
     }
   }
 
-  const [showEdit, setShowEdit] = useState(false);
-  const [showCreate, setShowCreate] = useState(false);
-  const [showDelete, setShowDelete] = useState(false);
-  const closeEdit = () => setShowEdit(false);
-  const closeCreate = () => setShowCreate(false);
-  const closeDelete = () => setShowDelete(false);
+  const [showEdit, setShowEdit] = useState(false)
+  const [showCreate, setShowCreate] = useState(false)
+  const [showDelete, setShowDelete] = useState(false)
+
+  const [newTicketData, setNewTicketData] = useState(DEFAULT_NEW_TICKET)
+  const [editTicketData, setEditTicketData] = useState(DEFAULT_NEW_TICKET)
+  const [deleteTicketData, setDeleteTicketData] = useState(DEFAULT_NEW_TICKET)
+  const [updatedUser, setUpdatedUser] = useState(DEFAULT_USER)
+
+  let editTicketId, updateUserId
+
+  React.useEffect(() => console.log(editTicketData), [editTicketData])
+
+  const {
+    data: ticketData,
+    loading,
+    error,
+    refetch: refetchTickets,
+  } = useQuery(TICKETS_QUERY)
+  const {
+    data: usersData,
+    loading: usersLoading,
+    error: usersError,
+    refetch: refetchUsers,
+  } = useQuery(USERS_QUERY)
+
+  const [handleCreate, { error: createError }] = useMutation(
+    CREATE_TICKET_MUTATION,
+    {
+      variables: {
+        data: {
+          data: {
+            title: newTicketData.title,
+            description: newTicketData.description,
+            status: newTicketData.status,
+            severity: newTicketData.severity,
+          },
+        },
+      },
+      onCompleted(data) {
+        console.log(data)
+        refetchTickets()
+      },
+    }
+  )
+
+  const [handleEdit, { error: editError }] = useMutation(EDIT_TICKET_MUTATION, {
+    variables: {
+      data: {
+        where: {
+          id: editTicketData.id,
+        },
+        data: {
+          title: editTicketData.title,
+          description: editTicketData.description,
+          status: editTicketData.status,
+          severity: editTicketData.severity,
+        },
+      },
+    },
+    onCompleted(data) {
+      console.log(data)
+      refetchTickets()
+    },
+  })
+
+  console.log('gmm', editTicketId, updateUserId)
+
+  const [handleEditAssignment, { error: editAssignmentError }] = useMutation(
+    EDIT_TICKET_MUTATION,
+    {
+      onCompleted(data) {
+        console.log(data, 'assign')
+        refetchTickets()
+      },
+    }
+  )
+
+  const [handleDelete, { error: deleteError }] = useMutation(
+    DELETE_TICKET_MUTATION,
+    {
+      variables: {
+        data: {
+          where: {
+            id: deleteTicketData.id,
+          },
+        },
+      },
+      onCompleted(data) {
+        console.log(data)
+        refetchTickets()
+      },
+    }
+  )
+
+  const closeEdit = async () => {
+    await handleEdit()
+    setShowEdit(false)
+  }
+  const closeCreate = async () => {
+    await handleCreate()
+    setShowCreate(false)
+  }
+  const closeDelete = async () => {
+    await handleDelete()
+    setShowDelete(false)
+  }
+
+  if (loading || usersLoading) {
+    return 'loading...'
+  }
+
+  if (error || usersError) {
+    console.error(error)
+    return 'error.'
+  }
+
+  console.log(ticketData, usersData)
 
   return (
     <div>
@@ -64,14 +295,13 @@ const TicketsContainer = () => {
               <Nav.Item>
                 <Nav.Link eventKey="second">Summary</Nav.Link>
               </Nav.Item>
-              {typeof userType && userType === "admin" ? (
+              {user.role && user.role === 'Admin' ? (
                 <Nav.Item>
                   <Nav.Link eventKey="third">Assignments</Nav.Link>
                 </Nav.Item>
               ) : (
-                  ""
-                )}
-
+                ''
+              )}
             </Nav>
           </Col>
           <Col sm={9}>
@@ -79,26 +309,33 @@ const TicketsContainer = () => {
               <Tab.Pane eventKey="first">
                 <div
                   css={`
-        height: 12vh;
-        display: flex;
-        justify-content: flex-start;
-        align-items: flex-start;
-        flex-direction: column;
-        `}
+                    height: 12vh;
+                    display: flex;
+                    justify-content: flex-start;
+                    align-items: flex-start;
+                    flex-direction: column;
+                  `}
                 >
                   <span
                     css={`
-        font-size: 28px;
-        font-weight: 300;
-          color: #7D8CA3;
-          text-align: left;
-        `}
+                      font-size: 28px;
+                      font-weight: 300;
+                      color: #7d8ca3;
+                      text-align: left;
+                    `}
                   >
                     Ticket Management
-      </span>
-                  <Button className='ml-1' variant="success" onClick={() => { setShowCreate(true) }}>New</Button>
+                  </span>
+                  <Button
+                    className="ml-1"
+                    variant="success"
+                    onClick={() => {
+                      setShowCreate(true)
+                    }}
+                  >
+                    New
+                  </Button>
                 </div>
-
 
                 <Table striped bordered hover>
                   <thead>
@@ -111,86 +348,112 @@ const TicketsContainer = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {tickets.map(element => (
+                    {ticketData.tickets.map((element, i) => (
                       <tr key={element.id}>
-                        <td>{element.id}</td>
-                        <td>{element.description}</td>
-                        <td>                        {typeof element.status && element.status === "Completed" ? (
-                          <Badge pill variant="success">
-                            Completed
-                          </Badge>
-                        ) : (
+                        <td>T{i}</td>
+                        <td>{element.title}</td>
+                        <td>
+                          {' '}
+                          {typeof element.status &&
+                          element.status === 'done' ? (
+                            <Badge pill variant="success">
+                              Completed
+                            </Badge>
+                          ) : (
                             <Badge pill variant="warning">
                               In Progress
                             </Badge>
-                          )}</td>
+                          )}
+                        </td>
                         <td>{element.severity}</td>
                         <td>
-                          <Button className='ml-1' variant="warning" onClick={() => selectTicket(element, "Edit")}>Edit</Button>
-                          <Button className='ml-1' variant="danger" onClick={() => selectTicket(element, "Delete")}>Delete</Button>
+                          <Button
+                            className="ml-1"
+                            variant="warning"
+                            onClick={() => {
+                              setEditTicketData(element)
+                              selectTicket(element, 'Edit')
+                            }}
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            className="ml-1"
+                            variant="danger"
+                            onClick={() => {
+                              setDeleteTicketData(element)
+                              selectTicket(element, 'Delete')
+                            }}
+                          >
+                            Delete
+                          </Button>
                         </td>
                       </tr>
-                    ))
-                    }
+                    ))}
                   </tbody>
                 </Table>
               </Tab.Pane>
               <Tab.Pane eventKey="second">
                 <span
                   css={`
-        font-size: 28px;
-        font-weight: 300;
-          color: #7D8CA3;
-          text-align: left;
-        `}
+                    font-size: 28px;
+                    font-weight: 300;
+                    color: #7d8ca3;
+                    text-align: left;
+                  `}
                 >
                   Tickets Summary
-      </span>
+                </span>
                 <div
                   css={`
-                font-size: 20px;
-                font-weight: 300;
-                display: flex;
-                flex-wrap: wrap;
-                justify-content: flex-start;
-                `}
+                    font-size: 20px;
+                    font-weight: 300;
+                    display: flex;
+                    flex-wrap: wrap;
+                    justify-content: flex-start;
+                  `}
                 >
-                  {tickets.map(element => (
-                    <Card style={{ width: '18rem', marginRight: "10px", marginBottom: "10px" }} key={element.id}>
+                  {ticketData.tickets.map((element) => (
+                    <Card
+                      style={{
+                        width: '18rem',
+                        marginRight: '10px',
+                        marginBottom: '10px',
+                      }}
+                      key={element.id}
+                    >
                       <Card.Body>
-                        <Card.Title>{element.Name}</Card.Title>
-                        <Card.Subtitle className="mb-2 text-muted">{element.severity} Serverity</Card.Subtitle>
-                        <Card.Text>
-                          {element.description}
-                        </Card.Text>
-                        {typeof element.status && element.status === "Completed" ? (
+                        <Card.Title>{element.title}</Card.Title>
+                        <Card.Subtitle className="mb-2 text-muted">
+                          {element.severity} Serverity
+                        </Card.Subtitle>
+                        <Card.Text>{element.description}</Card.Text>
+                        {typeof element.status && element.status === 'done' ? (
                           <Badge pill variant="success">
                             Completed
                           </Badge>
                         ) : (
-                            <Badge pill variant="warning">
-                              In Progress
-                            </Badge>
-                          )}
+                          <Badge pill variant="warning">
+                            In Progress
+                          </Badge>
+                        )}
                       </Card.Body>
                     </Card>
-                  ))
-                  }
-
+                  ))}
                 </div>
               </Tab.Pane>
-              {typeof userType && userType === "admin" ? (
+              {typeof userType && userType === 'admin' ? (
                 <Tab.Pane eventKey="third">
                   <span
                     css={`
-        font-size: 28px;
-        font-weight: 300;
-          color: #7D8CA3;
-          text-align: left;
-        `}
+                      font-size: 28px;
+                      font-weight: 300;
+                      color: #7d8ca3;
+                      text-align: left;
+                    `}
                   >
                     Ticket Assignments
-      </span>
+                  </span>
                   <Table striped bordered hover>
                     <thead>
                       <tr>
@@ -201,57 +464,106 @@ const TicketsContainer = () => {
                         <th>Asigned to</th>
                         <th>Created</th>
                         <th>Set as Completed</th>
-
-
                       </tr>
                     </thead>
                     <tbody>
-                      {tickets.map(element => (
+                      {ticketData.tickets.map((element) => (
                         <tr key={element.id}>
                           <td>{element.id}</td>
                           <td>{element.description}</td>
                           <td>
-                            {typeof element.status && element.status === "Completed" ? (
+                            {typeof element.status &&
+                            element.status === 'done' ? (
                               <Badge pill variant="success">
                                 Completed
                               </Badge>
                             ) : (
-                                <Badge pill variant="warning">
-                                  In Progress
-                                </Badge>
-                              )}</td>
+                              <Badge pill variant="warning">
+                                In Progress
+                              </Badge>
+                            )}
+                          </td>
                           <td>{element.severity}</td>
                           <td>
                             <Form>
                               <Form.Group controlId="exampleForm.SelectCustom">
-                                <Form.Control as="select" custom>
-                                  {devs.map(dev => (
-                                    <option key={dev.id} value={dev.id}>{dev.Name}</option>
-                                  ))}
+                                <Form.Control
+                                  as="select"
+                                  custom
+                                  onChange={async (e) => {
+                                    const targetValue = e.target.value
+                                    const wantedUser = usersData.users.map(
+                                      (user) => user.id === targetValue
+                                    )
+                                    updateUserId = wantedUser.id
+                                    editTicketId = element.id
+                                    console.log(wantedUser.username)
+                                    await handleEditAssignment({
+                                      variables: {
+                                        data: {
+                                          where: {
+                                            id: element.id,
+                                          },
+                                          data: {
+                                            assignedUser: wantedUser.id,
+                                          },
+                                        },
+                                      },
+                                      onComplete(data) {
+                                        console.log('data', data)
+                                      },
+                                    })
+                                  }}
+                                >
+                                  {usersData.users
+                                    .filter(
+                                      (user) => user.role.name === 'Admin'
+                                    )
+                                    .map((dev) => (
+                                      <option key={dev.id} value={dev.id}>
+                                        {dev.username}
+                                      </option>
+                                    ))}
                                 </Form.Control>
                               </Form.Group>
                             </Form>
                           </td>
                           <td>00/00/0000</td>
                           <td>
-                            <Button variant="success"><BsCheck /></Button>
+                            <Button
+                              variant="success"
+                              onClick={async () => {
+                                await handleEdit({
+                                  variables: {
+                                    data: {
+                                      where: {
+                                        id: element.id,
+                                      },
+                                      data: {
+                                        status: 'done',
+                                      },
+                                    },
+                                  },
+                                  onComplete(data) {
+                                    console.log('data', data)
+                                    }
+                                })
+                              }}
+                            >
+                              <BsCheck />
+                            </Button>
                           </td>
-
-
                         </tr>
-                      ))
-                      }
+                      ))}
                     </tbody>
                   </Table>
                 </Tab.Pane>
               ) : (
-                  ""
-                )}
-
+                ''
+              )}
             </Tab.Content>
           </Col>
         </Row>
-
       </Tab.Container>
       <Modal show={showEdit} onHide={closeEdit}>
         <Modal.Header closeButton>
@@ -261,24 +573,59 @@ const TicketsContainer = () => {
           <Form>
             <Form.Group controlId="ticketId">
               <Form.Label>ID</Form.Label>
-              <Form.Control type="text" value={selectedTicket && selectedTicket.id} disabled />
+              <Form.Control
+                type="text"
+                value={selectedTicket && selectedTicket.id}
+                disabled
+              />
             </Form.Group>
             <Form.Group controlId="ticketName">
               <Form.Label>Issue Title</Form.Label>
-              <Form.Control type="text" placeholder="Give your issue a name" value={selectedTicket && selectedTicket.Name} />
+              <Form.Control
+                type="text"
+                placeholder="Give your issue a name"
+                value={editTicketData && editTicketData.title}
+                onChange={(e) => {
+                  const targetValue = e.target.value
+                  setEditTicketData((data) => ({
+                    ...data,
+                    title: targetValue,
+                  }))
+                }}
+              />
             </Form.Group>
             <Form.Group controlId="ticketDescription">
               <Form.Label>Issue Description</Form.Label>
-              <Form.Control as="textarea" rows={3} value={selectedTicket && selectedTicket.description} />
+              <Form.Control
+                as="textarea"
+                rows={3}
+                value={editTicketData && editTicketData.description}
+                onChange={(e) => {
+                  const targetValue = e.target.value
+                  setEditTicketData((data) => ({
+                    ...data,
+                    description: targetValue,
+                  }))
+                }}
+              />
             </Form.Group>
             <Form.Group controlId="ticketSeverity">
               <Form.Label>Severity</Form.Label>
-              <Form.Control as="select" value={selectedTicket && selectedTicket.severity}>
-                <option>Low</option>
-                <option>Half</option>
-                <option>High</option>
-                <option>Critical</option>
-
+              <Form.Control
+                as="select"
+                value={editTicketData && editTicketData.severity}
+                onChange={(e) => {
+                  const targetValue = e.target.value
+                  setEditTicketData((data) => ({
+                    ...data,
+                    severity: targetValue,
+                  }))
+                }}
+              >
+                <option value="low">Low</option>
+                <option value="half">Half</option>
+                <option value="high">High</option>
+                <option value="critical">Critical</option>
               </Form.Control>
             </Form.Group>
           </Form>
@@ -286,10 +633,10 @@ const TicketsContainer = () => {
         <Modal.Footer>
           <Button variant="secondary" onClick={closeEdit}>
             Close
-    </Button>
+          </Button>
           <Button variant="primary" onClick={closeEdit}>
             Save Changes
-    </Button>
+          </Button>
         </Modal.Footer>
       </Modal>
 
@@ -305,19 +652,51 @@ const TicketsContainer = () => {
             </Form.Group>
             <Form.Group controlId="ticketName">
               <Form.Label>Issue Title</Form.Label>
-              <Form.Control type="text" placeholder="Give your issue a name" />
+              <Form.Control
+                type="text"
+                placeholder="Give your issue a name"
+                value={newTicketData.title}
+                onChange={(e) => {
+                  const targetValue = e.target.value
+                  setNewTicketData((data) => ({
+                    ...data,
+                    title: targetValue,
+                  }))
+                }}
+              />
             </Form.Group>
             <Form.Group controlId="ticketDescription">
               <Form.Label>Issue Description</Form.Label>
-              <Form.Control as="textarea" rows={3} />
+              <Form.Control
+                as="textarea"
+                rows={3}
+                value={newTicketData.description}
+                onChange={(e) => {
+                  const targetValue = e.target.value
+                  setNewTicketData((data) => ({
+                    ...data,
+                    description: targetValue,
+                  }))
+                }}
+              />
             </Form.Group>
             <Form.Group controlId="ticketSeverity">
               <Form.Label>Severity</Form.Label>
-              <Form.Control as="select">
-                <option>Low</option>
-                <option>Half</option>
-                <option>High</option>
-                <option>Critical</option>
+              <Form.Control
+                as="select"
+                value={newTicketData.severity}
+                onChange={(e) => {
+                  const targetValue = e.target.value
+                  setNewTicketData((data) => ({
+                    ...data,
+                    severity: targetValue,
+                  }))
+                }}
+              >
+                <option value="low">Low</option>
+                <option value="half">Half</option>
+                <option value="high">High</option>
+                <option value="critical">Critical</option>
               </Form.Control>
             </Form.Group>
             <Form.Group controlId="ticketStatus">
@@ -329,31 +708,30 @@ const TicketsContainer = () => {
         <Modal.Footer>
           <Button variant="secondary" onClick={closeCreate}>
             Close
-    </Button>
+          </Button>
           <Button variant="primary" onClick={closeCreate}>
             Create Ticket
-    </Button>
+          </Button>
         </Modal.Footer>
       </Modal>
 
-
       <Modal show={showDelete} onHide={closeDelete}>
         <Modal.Header closeButton>
-          <Modal.Title>Are you sure you want to delete this ticket?</Modal.Title>
+          <Modal.Title>
+            Are you sure you want to delete this ticket?
+          </Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Button variant="danger mr-3" onClick={closeDelete}>
             Delete
-    </Button>
+          </Button>
           <Button variant="primary" onClick={closeDelete}>
             Cancel
-    </Button>
+          </Button>
         </Modal.Body>
-
       </Modal>
     </div>
-  );
+  )
 }
 
-
-export default TicketsContainer;
+export default TicketsContainer

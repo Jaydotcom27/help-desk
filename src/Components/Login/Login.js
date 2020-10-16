@@ -5,13 +5,17 @@ import 'styled-components/macro'
 import { useMutation, gql } from '@apollo/client'
 import { useUser } from '../../Providers/User'
 
-const LOGIN_USER_QUERY = gql`
+const LOGIN_USER_MUTATION = gql`
   mutation Login($data: UsersPermissionsLoginInput!) {
     login(input: $data) {
       jwt
       user {
+        id
         username
         email
+        role {
+          name
+        }
       }
     }
   }
@@ -40,7 +44,7 @@ function LoginForm() {
   const history = useHistory()
   const user = useUser()
 
-  const [login, { loading, error }] = useMutation(LOGIN_USER_QUERY, {
+  const [login, { loading, error }] = useMutation(LOGIN_USER_MUTATION, {
     variables: {
       data: {
         identifier: email,
@@ -51,9 +55,11 @@ function LoginForm() {
     onCompleted({ login }) {
       console.log(login)
       console.log('Logged in sucessfully with', login.user.username)
-      localStorage.setItem('token', login.jwt)
+      localStorage.setItem('FRANCIA_token', login.jwt)
       user.setUsername(login.user.username)
       user.setEmail(login.user.email)
+      user.setId(login.user.id)
+      user.setRole(login.user.role.name)
       history.push('/user')
     },
   })

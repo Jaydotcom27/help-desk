@@ -26,15 +26,26 @@ export function useUser() {
 export default function UserContextProvider({ children }) {
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
+  const [id, setId] = useState('')
+  const [role, setRole] = useState('Admin')
 
   const userContextValue = useMemo(
-    () => ({ username, email, setUsername, setEmail }),
-    [username, email]
+    () => ({
+      username,
+      email,
+      id,
+      role,
+      setUsername,
+      setEmail,
+      setId,
+      setRole,
+    }),
+    [username, email, id, role, setUsername, setEmail, setId, setRole]
   )
 
   useEffect(() => {
-    console.log('Emitting update', username, email)
-  }, [username, email])
+    console.log('Emitting update', username, email, id)
+  }, [username, email, id])
 
   return (
     <UserContext.Provider value={userContextValue}>
