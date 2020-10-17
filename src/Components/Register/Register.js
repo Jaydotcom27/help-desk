@@ -49,6 +49,7 @@ function RegisterForm() {
         password,
       },
     },
+    errorPolicy: 'ignore',
     onCompleted() {
       setSuccess(true)
       setTimeout(() => {

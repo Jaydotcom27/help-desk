@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react'
+import React, { useState } from 'react'
 import Tab from 'react-bootstrap/Tab'
 import Row from 'react-bootstrap/Row'
 import Col from 'react-bootstrap/Col'
@@ -203,6 +203,7 @@ const TicketsContainer = () => {
           },
         },
       },
+      errorPolicy: 'ignore',
       onCompleted(data) {
         console.log(data)
         refetchTickets()
@@ -224,6 +225,7 @@ const TicketsContainer = () => {
         },
       },
     },
+    errorPolicy: 'ignore',
     onCompleted(data) {
       console.log(data)
       refetchTickets()
@@ -235,6 +237,7 @@ const TicketsContainer = () => {
   const [handleEditAssignment, { error: editAssignmentError }] = useMutation(
     EDIT_TICKET_MUTATION,
     {
+      errorPolicy: 'ignore',
       onCompleted(data) {
         console.log(data, 'assign')
         refetchTickets()
@@ -252,6 +255,7 @@ const TicketsContainer = () => {
           },
         },
       },
+      errorPolicy: 'ignore',
       onCompleted(data) {
         console.log(data)
         refetchTickets()

@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { Form } from 'react-bootstrap'
 import { useHistory } from 'react-router-dom'
 import 'styled-components/macro'
@@ -22,6 +22,12 @@ const LOGIN_USER_MUTATION = gql`
 `
 
 export default function Login() {
+  useEffect(() => {
+    console.log('called')
+    localStorage.removeItem('FRANCIA_token')
+    console.log(localStorage.getItem('FRANCIA_token'))
+  }, [])
+
   return (
     <div
       css={`
@@ -51,6 +57,7 @@ function LoginForm() {
         password,
         provider: 'local',
       },
+      errorPolicy: 'ignore',
     },
     onCompleted({ login }) {
       console.log(login)
