@@ -468,7 +468,6 @@ const TicketsContainer = () => {
                         <th>Current Status</th>
                         <th>Severity</th>
                         <th>Asigned to</th>
-                        <th>Created</th>
                         <th>Set as Completed</th>
                       </tr>
                     </thead>
