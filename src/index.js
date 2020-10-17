@@ -22,18 +22,11 @@ const authLink = setContext((_, { headers }) => {
   const token = localStorage.getItem('FRANCIA_token')
   console.log(_, 'lodash')
   // return the headers to the context so httpLink can read them
-  return _.operationName !== 'Login' || _.operationName !== 'Register'
-    ? {
-        headers: {
-          ...headers,
-          authorization: token ? `Bearer ${token}` : '',
-        },
-      }
-    : {
-        headers: {
-          ...headers,
-        },
-      }
+  return {
+    headers: {
+      ...headers,
+    },
+  }
 })
 
 const client = new ApolloClient({

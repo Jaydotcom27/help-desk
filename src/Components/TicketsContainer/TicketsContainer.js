@@ -281,7 +281,7 @@ const TicketsContainer = () => {
   }
 
   if (error || usersError) {
-    console.error(error)
+    console.error(error, usersError)
     return 'error.'
   }
 
@@ -348,7 +348,7 @@ const TicketsContainer = () => {
                       <th>Issue</th>
                       <th>Status</th>
                       <th>Severity</th>
-                      <th>Control</th>
+                      {user.role === 'Admin' && <th>Control</th>}
                     </tr>
                   </thead>
                   <tbody>
@@ -370,28 +370,30 @@ const TicketsContainer = () => {
                           )}
                         </td>
                         <td>{element.severity}</td>
-                        <td>
-                          <Button
-                            className="ml-1"
-                            variant="warning"
-                            onClick={() => {
-                              setEditTicketData(element)
-                              selectTicket(element, 'Edit')
-                            }}
-                          >
-                            Edit
-                          </Button>
-                          <Button
-                            className="ml-1"
-                            variant="danger"
-                            onClick={() => {
-                              setDeleteTicketData(element)
-                              selectTicket(element, 'Delete')
-                            }}
-                          >
-                            Delete
-                          </Button>
-                        </td>
+                        {user.role === 'Admin' && (
+                          <td>
+                            <Button
+                              className="ml-1"
+                              variant="warning"
+                              onClick={() => {
+                                setEditTicketData(element)
+                                selectTicket(element, 'Edit')
+                              }}
+                            >
+                              Edit
+                            </Button>
+                            <Button
+                              className="ml-1"
+                              variant="danger"
+                              onClick={() => {
+                                setDeleteTicketData(element)
+                                selectTicket(element, 'Delete')
+                              }}
+                            >
+                              Delete
+                            </Button>
+                          </td>
+                        )}
                       </tr>
                     ))}
                   </tbody>
@@ -471,10 +473,10 @@ const TicketsContainer = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {ticketData.tickets.map((element) => (
+                      {ticketData.tickets.map((element, id) => (
                         <tr key={element.id}>
-                          <td>{element.id}</td>
-                          <td>{element.description}</td>
+                          <td>T{id}</td>
+                          <td>{element.title}</td>
                           <td>
                             {typeof element.status &&
                             element.status === 'done' ? (
@@ -532,7 +534,6 @@ const TicketsContainer = () => {
                               </Form.Group>
                             </Form>
                           </td>
-                          <td>00/00/0000</td>
                           <td>
                             <Button
                               variant="success"
